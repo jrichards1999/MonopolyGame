@@ -70,12 +70,12 @@ namespace MonopolyNamespace{
             int rent = 0;
 
             //If space landed on is a railroad
-            if(index = 5 || index = 15 || index = 25 || index = 35)
+            if(index == 5 || index == 15 || index == 25 || index == 35)
             {
                 rent = railsFee(index);
             }
             //If space landed on is utility
-            else if(index = 12 || index = 28)
+            else if(index == 12 || index == 28)
             {
                 if (hasMonopoly(index))
                 {
