@@ -8,7 +8,7 @@ namespace MonopolyNamespace
     {
         private string name;
         private int spaceNumber;
-        private string ownedBy;
+        private Player ownedBy;
         private int cost;
         private int rent;
         private int mortgage;
@@ -18,7 +18,7 @@ namespace MonopolyNamespace
         {
             name = spaceName;
             cost = price;
-            ownedBy = "";
+            ownedBy = null;
         }
 
         public string getName()
@@ -31,7 +31,7 @@ namespace MonopolyNamespace
             return spaceNumber;
         }
 
-        public string getOwner()
+        public Player getOwner()
         {
             return ownedBy;
         }
@@ -616,9 +616,9 @@ namespace MonopolyNamespace
             }
         }
 
-        public void setName(string playerName)
+        public void setOwner(Player owner)
         {
-            name = playerName;
+            ownedBy = owner;
         }
 
         public void setSpaceNumber(int index)

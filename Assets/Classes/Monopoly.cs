@@ -7,7 +7,12 @@ namespace MonopolyNamespace{
     {
 
         static BoardSpace[] boardSpaces = new BoardSpace[40];
-        //TODO - List of Chance + Community Chest Cards
+
+        static ModifierCard[] chanceCards = new ModifierCard[16];
+
+        static ModifierCard[] communityChestCards = new ModifierCard[16];
+
+        static List<Player> playerList = new List<Player>();
 
         //Initialize each property/space of game board boardSpaces[]
         static void populateBoard()
@@ -60,6 +65,64 @@ namespace MonopolyNamespace{
             for(int i = 0; i < 40; i++)
             {
                 boardSpaces[i].setSpaceNumber(i);
+            }
+        }
+
+        static void setChance()
+        {
+            chanceCards[0] = new ModifierCard("chance", "Advance to GO", "moveTo00");
+            chanceCards[1] = new ModifierCard("chance", "Advance to Illinois Avenue. If you pass GO collect $200", "moveTo24");
+            chanceCards[2] = new ModifierCard("chance", "Advance to St. Charles Place If you pass GO collect $200", "moveTo16");
+            chanceCards[3] = new ModifierCard("chance", "Advance token to the nearest Utility. If unowned, you may buy it from the Bank.\n If owned, throw dice and pay owner a total of 10 times the amount thrown.", "moveToUT");
+            chanceCards[4] = new ModifierCard("chance", "Advance to the nearest Railroad. If unowned, you may buy it from the Bank.\n If owned, pay owner twice the rental to which they are otherwise entitled.", "moveToRR");
+            chanceCards[5] = new ModifierCard("chance", "Bank pays you a dividend of $50", "add+050");
+            chanceCards[6] = new ModifierCard("chance", "Get out of Jail free", "gooj");
+            chanceCards[7] = new ModifierCard("chance", "Go Back 3 Spaces", "index-3");
+            chanceCards[8] = new ModifierCard("chance", "Go To Jail-Go directly to Jail-Do not pass GO, do not collect $200", "jail");
+            chanceCards[9] = new ModifierCard("chance", "Make general repairs on all your property: For each house pay $25, For each hotel pay $100", "generalRepair");
+            chanceCards[10] = new ModifierCard("chance", "Pay poor tax of $15", "add-015");
+            chanceCards[11] = new ModifierCard("chance", "Take a trip to Reading Railroad. If you pass GO, collect $200", "moveTo05");
+            chanceCards[12] = new ModifierCard("chance", "Take a walk on the Boardwalk. Advance token to Boardwalk", "moveTo39");
+            chanceCards[13] = new ModifierCard("chance", "You have been elected Chairman of the Board. Pay each player $50", "payPlayers");
+            chanceCards[14] = new ModifierCard("chance", "Your building and loan matures. Collect $150", "add+150");
+            chanceCards[15] = new ModifierCard("chance", "You have won a crossword competition. Collect $100", "add+100");
+            shuffleCards(chanceCards);
+        }
+
+        static void setCommunityChest()
+        {
+            communityChestCards[0] = new ModifierCard("communityChest", "Advance to GO", "moveTo00");
+            communityChestCards[1] = new ModifierCard("communityChest", "Bank error in your favor. Collect $200", "add+200");
+            communityChestCards[2] = new ModifierCard("communityChest", "Doctor's Fees. Pay $50", "add-050");
+            communityChestCards[3] = new ModifierCard("communityChest", "From sale of stock you get $50", "add+050");
+            communityChestCards[4] = new ModifierCard("communityChest", "Get out of jail free", "gooj");
+            communityChestCards[5] = new ModifierCard("communityChest", "Go To Jail-Go directly to Jail-Do not pass GO, do not collect $200", "jail");
+            communityChestCards[6] = new ModifierCard("communityChest", "Grand Opera Night. Collect $50 from every player for opening night seats", "playersPay50");
+            communityChestCards[7] = new ModifierCard("communityChest", "Holiday Fund Matures. Receive $100", "add+100");
+            communityChestCards[8] = new ModifierCard("communityChest", "Income tax refund. Collect $20", "jail");
+            communityChestCards[9] = new ModifierCard("communityChest", "You inherit $100", "add+100");
+            communityChestCards[10] = new ModifierCard("communityChest", "Life insurances matures - Collect $100", "add+100");
+            communityChestCards[11] = new ModifierCard("communityChest", "Hospital Fees - Pay $50", "add-050");
+            communityChestCards[12] = new ModifierCard("communityChest", "School fees. Pay $50", "add-050");
+            communityChestCards[13] = new ModifierCard("communityChest", "Receive $25 consultancy fee", "add+25");
+            communityChestCards[14] = new ModifierCard("communityChest", "You are assessed for street repairs: For each house pay $40, For each hotel pay $115", "streetRepair");
+            communityChestCards[15] = new ModifierCard("communityChest", "You have won second prize in a beauty contest. Collect $10", "add+010");
+            shuffleCards(communityChestCards);
+        }
+
+        //Standard shuffle algorithm
+        static void shuffleCards(ModifierCard[] deck)
+        {
+            System.Random r = new System.Random();
+
+            for(int i = 0; i < deck.Length; i++)
+            {
+
+                int j = r.Next(i, deck.Length);
+                ModifierCard tmp = deck[i];
+                deck[i] = deck[j];
+                deck[j] = tmp;
+
             }
         }
 
@@ -229,6 +292,143 @@ namespace MonopolyNamespace{
 
             return fee;
         }
+
+        //Roll a single 6-sided die
+        static int roll()
+        {
+            System.Random r = new System.Random();
+
+            int die = r.Next(1, 6);
+
+            return die;
+        }
+
+        static void playerRoll(Player currentPlayer)
+        {
+            bool rolledDouble = true;
+            int doubleCount = 0;
+            //turn
+            while (rolledDouble)
+            {
+                //Rolls
+                int die1 = roll();
+                int die2 = roll();
+                int total = die1 + die2;
+                if(die1 != die2)
+                {
+                    rolledDouble = false;
+                }
+                else
+                {
+                    doubleCount++;
+                    //Go to jail on third double in a row
+                    if (doubleCount == 3)
+                    {
+                        currentPlayer.setCurrentSpace(10);
+                        currentPlayer.setJailStatus(true);
+                        break;
+                    }
+                }
+
+                //Move Player
+                int spacesMoved = 0;
+                while(spacesMoved < total)
+                {
+                    spacesMoved++;//Move forward one space
+
+                    //Reset from 40 to 0 (player gets to 'GO')
+                    if(currentPlayer.getSpace() == 40)
+                    {
+                        currentPlayer.setCurrentSpace(0);
+                        currentPlayer.setMoney(currentPlayer.getMoney() + 200);
+                    }
+                }
+
+                //Player lands on space
+                BoardSpace space = boardSpaces[currentPlayer.getSpace()];
+
+                //Space is a property
+                if (space.getCost() > 0)
+                {
+                    //If space is unowned
+                    if(space.getOwner() == null)
+                    {
+                        if(space.getCost() > currentPlayer.getMoney())
+                        {
+                            //Player does not have enough money to buy the property
+                            //TODO - Player mortgages, sells houses to afford property (unlikely - but possible)
+                            continue;
+                        }
+                        else
+                        {
+                            //TODO - Method to Prompt Player to Buy y/n + add player to property owner + remove cash from player
+                        }
+
+                    }
+                    //If space is owned (not by current player)
+                    else if(space.getOwner() != currentPlayer)
+                    {
+                        int rent = getRent(space.getSpaceNumber(), total);
+
+                        //Pay owner if enough money is owned by current player
+                        if((currentPlayer.getMoney() - rent) >= 0)
+                        {
+                            currentPlayer.setMoney(currentPlayer.getMoney() - rent);
+                            space.getOwner().setMoney(space.getOwner().getMoney() + rent);
+                        }
+                        else
+                        {
+                            //TODO - Player mortgages, sells houses, or forfeit all to owner
+                        }
+                        
+                    }
+                }
+                //Space is Chance, Community Chest, Tax Spot, or Corner
+                else
+                {
+                    //Chance
+                    if(space.getSpaceNumber() == 7 || space.getSpaceNumber() == 22 || space.getSpaceNumber() == 36)
+                    {
+                        //TODO - Modifier check on chance cards
+                    }
+                    //Community Chest
+                    else if(space.getSpaceNumber() == 2 || space.getSpaceNumber() == 17 || space.getSpaceNumber() == 33)
+                    {
+                        //TODO - modifier check on community chest cards
+                    }
+                    //Income Tax
+                    else if(space.getSpaceNumber() == 4)
+                    {
+                        //10% or 200
+                        int percent = System.Convert.ToInt32(currentPlayer.getMoney() * 0.1);
+                        int tax = 200;
+                        if(percent < 200)
+                        {
+                            tax = percent;
+                        }
+                        currentPlayer.setMoney(currentPlayer.getMoney() - tax);
+                    }
+                    //Luxury Tax
+                    else if(space.getSpaceNumber() == 38)
+                    {
+                        currentPlayer.setMoney(currentPlayer.getMoney() - 75);
+                    }
+                    //Else if Go To Jail
+                    else if (space.getSpaceNumber() == 30)
+                    {
+                        currentPlayer.setCurrentSpace(10);
+                        currentPlayer.setJailStatus(true);
+                        break;
+                    }
+                }
+                
+            }
+            
+
+            
+        }
+
+
 
 
         // Start is called before the first frame update
